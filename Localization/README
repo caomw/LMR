@@ -1,0 +1,50 @@
+Align Two RGBD frame GPU implementation
+==============
+Taken two RGB-D images as input, the algorithm first detect SIFT keypoints and use 3-point algorithm under RANSAC to estimate the alignment.
+The steps of SIFT keypoints extraction, matching and RANSAC are all implemented in GUP.
+
+This code is heavily built on M. Björkman's CUDA implementation of SIFT, for more details please reference to:
+https://github.com/Celebrandil/CudaSift
+M. Björkman, N. Bergström and D. Kragic, "Detecting, segmenting and tracking unknown objects using multi-label MRF inference", CVIU 
+
+Dependency : The code relies on CMake for compilation and OpenCV for image reading.
+
+To compile and run the code:
+--------------
+cd build
+cmake ..
+make 
+./alignTwoviewGPU
+
+
+The dependencies between files
+--------------
+
+ 
+mainSift.cpp ->	cudaImage.h
+			    RGBD_utils.h -> cudaSift.h   -> cudaImage.h
+			    dataTrain.h
+
+estimatRTGPU.cu -> cudautils.h
+
+cudaImage.cu -> cudaImage.h
+
+cudaSiftH.cu -> cudaImage.h
+                cudaSift.h   -> cudaImage.h
+	        	cudaSiftD.h
+                cudaSiftH.h  -> cudaImage.h
+				cudaSiftD.cu
+
+The code is free to use for non-commercial applications. 
+
+Example data stores at : ./data
+--------------
+
+Results store at : ./result
+--------------
+
+Questions?
+--------------
+
+Email Jianxiong Xiao http://vision.princeton.edu/
+
