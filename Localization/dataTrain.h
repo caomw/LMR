@@ -35,6 +35,7 @@ class DataTrain {
   int numofcenters;
   cv::Mat BOWfeatureTrain;
   /************ memember functions ***************/
+  DataTrain(const string dataRoot,const string sequenceName,const string Test);
   DataTrain(const string,const string); 
   ~DataTrain();
   void preComputeSift(const string filename = "preComputeSift");

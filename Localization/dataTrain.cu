@@ -13,6 +13,39 @@ DataTrain::DataTrain(const string dataRoot,const string sequenceName){
   this->BOWfeatureTrain= cv::Mat::zeros(numofframe,numofcenters,cv::DataType<float>::type);
   
 }
+DataTrain::DataTrain(const string dataRoot,const string sequenceName,const string Test)
+{
+      // color
+    string listfile_color = dataRoot+sequenceName+"colorTest.txt";
+    string line;
+    ifstream file_color (listfile_color);
+    if (file_color.is_open()){
+      getline(file_color,line);
+      this->numofframe = atoi( line.c_str() );
+      while(getline(file_color,line)){
+           color_list.push_back(line);
+      }
+      file_color.close();
+    }
+    else cout << "Unable to open file: "<< listfile_color;
+    
+    
+    //depth
+    string listfile_depth = dataRoot+sequenceName+"depthTest.txt";
+    ifstream  myfile(listfile_depth);
+    if (myfile.is_open()){
+      getline(myfile,line);
+      while(getline(myfile,line)){
+            depth_list.push_back(line);
+      }
+      myfile.close();
+    }
+    else cout << "Unable to open file: "<< listfile_color;
+
+    siftFrameIDs =NULL;
+    numofSiftPerframe =NULL;
+
+}
 DataTrain::~DataTrain(){
     FreeSiftData(siftDataTrain);
     FreeSiftData(siftDataCenter);
@@ -159,7 +192,7 @@ void DataTrain::outputPly(const string filename, int numofsample=10000){
     pointCloud_l = transformPointCloud(pointCloud_l,&(this->extrinsic[12*frame_id]));
     char buffer [50];
     sprintf (buffer, "%s%d.ply", filename.c_str(), frame_id);
-    WritePlyFile(buffer, pointCloud_l, limg);
+    WritePlyFile(buffer, pointCloud_l, limg,1);
   }
 }
 

@@ -6,6 +6,10 @@ include(CPack)
 
 find_package(OpenCV REQUIRED)
 find_package(CUDA)
+find_package(GLUT REQUIRED)
+
+
+
 if (NOT CUDA_FOUND)
   message(STATUS "CUDA not found. Project will not be built.")
 endif(NOT CUDA_FOUND)
@@ -40,12 +44,15 @@ set(cuda_sources
 set(sources
   #estimatRT.cpp # cpu ransac
   mainSift.cpp
+  renderMesh.cpp
   RGBD_utils.cpp
 )
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR} 
+  ${GLUT_INCLUDE_DIRS}
 )
+include_directories (/opt/X11/include/)
 
 cuda_add_executable(alignTwoRGBDGPU ${cuda_sources} ${sources})
 
@@ -55,8 +62,10 @@ set_target_properties(alignTwoRGBDGPU PROPERTIES
 )
 
 target_link_libraries(alignTwoRGBDGPU
-  "${OpenCV_LIBS}"
+  "${OpenCV_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY}"
+  /opt/X11/lib/libOSMesa.dylib
 )
+
 
 install(FILES 
   ${cuda_sources} 

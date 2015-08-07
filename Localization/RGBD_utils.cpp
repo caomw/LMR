@@ -1,7 +1,5 @@
 #include "RGBD_utils.h"
 ////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
 cv::Mat GetDepthData(const string &file_name) {
   cv::Mat img = cv::imread(file_name,cv::IMREAD_ANYDEPTH);//CV_16UC1
   cv::Mat depth(img.size().height, img.size().width, cv::DataType<float>::type);
@@ -57,10 +55,10 @@ cv::Mat transformPointCloud(cv::Mat pointsCloud,float T[12]){
 }
 
 
-void WritePlyFile(const char* plyfile, const cv::Mat pointCloud){
+void WritePlyFile(const char* plyfile, const cv::Mat pointCloud,const int sample=2){
   FILE *fp = fopen(plyfile,"w");
   int pointCount =0;
-  for (int v = 0; v < pointCloud.size().height; ++v) {
+  for (int v = 0; v < pointCloud.size().height; v += sample) {
     if (pointCloud.at<float>(v,3)>0.0001){
       pointCount++;
     }
@@ -75,7 +73,7 @@ void WritePlyFile(const char* plyfile, const cv::Mat pointCloud){
   fprintf(fp, "property float y\n");
   fprintf(fp, "property float z\n");
   fprintf(fp, "end_header\n");
-  for (int v = 0; v < pointCloud.size().height; ++v) {
+  for (int v = 0; v < pointCloud.size().height; v += sample) {
       if (pointCloud.at<float>(v,3)>0.0001){
          fwrite(&pointCloud.at<float>(v,0), sizeof(float), 1, fp);
          fwrite(&pointCloud.at<float>(v,1), sizeof(float), 1, fp);
@@ -88,7 +86,7 @@ void WritePlyFile(const char* plyfile, const cv::Mat pointCloud){
 
 
 //outputPly(PLYfilename, cameraRtC2W, data,Scale)
-void WritePlyFile(const char* plyfile, const cv::Mat pointCloud, const cv::Mat color){
+void WritePlyFile(const char* plyfile, const cv::Mat pointCloud, const cv::Mat color,const int sample=2){
 	FILE *fp = fopen(plyfile,"w");
 	int pointCount =0;
 	for (int v = 0; v < pointCloud.size().height; ++v) {

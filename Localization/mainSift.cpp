@@ -9,8 +9,7 @@
 #include "RGBD_utils.h"
 #include "dataTrain.h"
 #include <ctime>
-
-
+#include "renderMesh.h"
 
 
 //int ImproveHomography(SiftData &data, float *homography, int numLoops, float minScore, float maxAmbiguity, float thresh);
@@ -63,7 +62,6 @@ void PrintMatchSiftData(SiftData &siftData1, const char* filename,int imgw){
     }
 
     fout.close();
-
  }
 
 
@@ -139,60 +137,72 @@ int main(int argc, char **argv)
   //dataTrain.outputKeyPoint("../result/keypoint.ply");
  
   std::cout<<"------------------FINISH INITIALING------------------"<<std::endl;
-  
-  //start to align new view 
-  string rimg_file = "/Users/shuran/Documents/third_floor_tearoom/data/spot_0001/step_0108/device1/image/0024569-1427763731008041.tif";
-  string rdepth_file ="/Users/shuran/Documents/third_floor_tearoom/data/spot_0001/step_0108/device1/depthMedian/0014611-1427763730547306.tif";
-  //string rimg_file = dataTrain.color_list[0];
-  //string rdepth_file = dataTrain.depth_list[0];
-  cv::Mat rdepth = GetDepthData(rdepth_file);
+  DataTrain dataTest(dataRoot,sequenceName,"Test");
+  for (int frameTestId = 0;frameTestId<dataTest.numofframe;frameTestId++){
+    std::cout<<"------------------frame "<< frameTestId << "------------------"<<std::endl;
+    //start to align new view 
+    //string rimg_file = "/Users/shuran/Documents/third_floor_tearoom/data/spot_0001/step_0108/device1/image/0024569-1427763731008041.tif";
+    //string rdepth_file ="/Users/shuran/Documents/third_floor_tearoom/data/spot_0001/step_0108/device1/depthMedian/0014611-1427763730547306.tif";
+    string rimg_file = dataTrain.color_list[frameTestId];
+    string rdepth_file = dataTrain.depth_list[frameTestId];
+    cv::Mat rdepth = GetDepthData(rdepth_file);
 
-  cv::Mat rimg = cv::imread(rimg_file, 0);  
-  cv::Mat pointCloud_Test = depth2XYZcamera(dataTrain.cameraModel,rdepth,1);
-  SiftData siftDataTrain = dataTrain.siftDataTrain;
-  SiftData siftDataTest = computeSift(rimg);
-  getSift3dPoints(siftDataTest,pointCloud_Test,rdepth.size().width);
-  
-  // Find the colosest frames using BOWs
-  clock_t startTime = clock();
-  cv::Mat BOWTest = ComputeBOWfea(dataTrain.siftDataCenter,siftDataTest);
-  cv::Mat  dst = dataTrain.findNearFrameBOW(BOWTest);
-  clock_t endTime = clock();
-  double timeInmSeconds = (endTime-startTime)*1000 / (double) CLOCKS_PER_SEC;
-  printf("ComputeBOWfea + findNearFrameBOW =  %.2f ms\n", timeInmSeconds);
+    cv::Mat rimg = cv::imread(rimg_file, 0);  
+    cv::Mat pointCloud_Test = depth2XYZcamera(dataTrain.cameraModel,rdepth,1);
+    SiftData siftDataTrain = dataTrain.siftDataTrain;
+    SiftData siftDataTest = computeSift(rimg);
+    int numofvalid = getSift3dPoints(siftDataTest,pointCloud_Test,rdepth.size().width);
+    if (numofvalid<10){ // too few sift 
+        continue;
+    }
+    /*
+    // Find the colosest frames using BOWs
+    clock_t startTime = clock();
+    cv::Mat BOWTest = ComputeBOWfea(dataTrain.siftDataCenter,siftDataTest);
+    cv::Mat  dst = dataTrain.findNearFrameBOW(BOWTest);
+    clock_t endTime = clock();
+    double timeInmSeconds = (endTime-startTime)*1000 / (double) CLOCKS_PER_SEC;
+    printf("ComputeBOWfea + findNearFrameBOW =  %.2f ms\n", timeInmSeconds);
 
-  // TODO: construct siftDataToMatch
-  // DEVICETODEVICE copy 
-  for (int i =0;i<3;i++){
-      cout<<dst.at<int>(i)<<":"<<dataTrain.color_list[dst.at<int>(i)]<<endl;
+    // TODO: construct siftDataToMatch
+    // DEVICETODEVICE copy 
+    for (int i =0;i<3;i++){
+        cout<<dst.at<int>(i)<<":"<<dataTrain.color_list[dst.at<int>(i)]<<endl;
+    }
+    */
+    
+    // Match Sift features 
+    MatchSiftData(siftDataTest,siftDataTrain);
+
+    // get the coordinate of matched points
+    cv::Mat refCoord(0,3,cv::DataType<float>::type);
+    cv::Mat movCoord(0,3,cv::DataType<float>::type);
+    int imgw = rimg.size().width;
+    int imgh = rimg.size().height;
+    int numTomatchedsift =  getSift3dPointsMatch(siftDataTest,siftDataTrain,&refCoord,&movCoord,imgw);
+
+    std::cout << "numTomatchedsift:" <<  numTomatchedsift << std::endl;  
+
+    int* numMatches;
+    float rigidtrans[12];
+    int numLoops = 1280;
+    
+    ransacfitRt(refCoord,movCoord,rigidtrans, numMatches,numLoops,0.1);
+
+
+    pointCloud_Test = transformPointCloud(pointCloud_Test,rigidtrans);
+    cv::Mat color = cv::imread(rimg_file);
+    //WritePlyFile("../result/mov.ply",pointCloud_Test,color);
+    char filename [50];
+    sprintf (filename, "../result/mov%d.ply",frameTestId);
+    WritePlyFile(filename,pointCloud_Test,color,50);
+
+    FreeSiftData(siftDataTest);
 
   }
   
-  // Match Sift features 
-  MatchSiftData(siftDataTest,siftDataTrain);
-
-  // get the coordinate of matched points
-  cv::Mat refCoord(0,3,cv::DataType<float>::type);
-  cv::Mat movCoord(0,3,cv::DataType<float>::type);
-  int imgw = rimg.size().width;
-  int imgh = rimg.size().height;
-  int numTomatchedsift =  getSift3dPointsMatch(siftDataTest,siftDataTrain,&refCoord,&movCoord,imgw);
-
-  std::cout << "numTomatchedsift:" <<  numTomatchedsift << std::endl;  
-
-  int numMatches[1];
-  float rigidtrans[12];
-  int numLoops = 1280;
   
-  ransacfitRt(refCoord,movCoord,rigidtrans, numMatches,numLoops,0.1);
 
-
-  cv::Mat pointCloud_Test_t = transformPointCloud(pointCloud_Test,rigidtrans);
-  cv::Mat color = cv::imread(rimg_file);
-  WritePlyFile("../result/mov.ply",pointCloud_Test,color);
-  WritePlyFile("../result/mov_afteralign.ply",pointCloud_Test_t,color);
-
-  FreeSiftData(siftDataTest);
   return 1;
 
   //clock_t startTime = clock();

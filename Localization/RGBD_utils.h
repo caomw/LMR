@@ -28,8 +28,8 @@ typedef struct cameraModel {
 ////////////////////////////////////////////////////////////////////////////////
 cv::Mat GetDepthData(const string &file_name);
 cv::Mat depth2XYZcamera(cameraModel cam_K,const cv::Mat depth,const float Scale);
-void WritePlyFile(const char* plyfile, const cv::Mat pointCloud);
-void WritePlyFile(const char* plyfile, const cv::Mat pointCloud, const cv::Mat color);
+void WritePlyFile(const char* plyfile, const cv::Mat pointCloud, const int sample);
+void WritePlyFile(const char* plyfile, const cv::Mat pointCloud, const cv::Mat color, const int sample);
 void writeMatToFile(const cv::Mat& m, const char* filename);
 cv::Mat transformPointCloud(cv::Mat pointsCloud,float T[12]);
 void ransacfitRt(const cv::Mat refCoord, const cv::Mat movCoord, float* rigidtransform, 

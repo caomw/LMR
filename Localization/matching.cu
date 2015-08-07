@@ -76,14 +76,14 @@ __global__ void FindMaxCorr(float *corrData, SiftPoint *sift1, SiftPoint *sift2,
       float val = maxScore[idx+len];
       int i = maxIndex[idx+len];
       if (val>maxScore[idx]) {
-	maxScor2[idx] = maxScore[idx];
-	maxScore[idx] = val;
-	maxIndex[idx] = i;
+      	maxScor2[idx] = maxScore[idx];
+      	maxScore[idx] = val;
+      	maxIndex[idx] = i;
       } else if (val>maxScor2[idx])
-	maxScor2[idx] = val;
+	       maxScor2[idx] = val;
       float va2 = maxScor2[idx+len];
       if (va2>maxScor2[idx])
-	maxScor2[idx] = va2;
+	     maxScor2[idx] = va2;
     }
     __syncthreads();
     //if (p1==1 && tx<len) 
@@ -117,7 +117,6 @@ double MatchSiftData(SiftData &data1, SiftData &data2)
 
   int numPts1 = data1.numPts;
   int numPts2 = data2.numPts;
-//printf("numPts: %d,%d\n",numPts1,numPts2);
   SiftPoint *sift1 = data1.d_data;
   SiftPoint *sift2 = data2.d_data;
   
